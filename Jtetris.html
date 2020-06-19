@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+</head>
+
+<body>
+	<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+	<script>
+		//基本変数
+		var init = false;
+		var myCanvas;
+		var Context;
+		var tetrix_blockbox = new Array();
+		var tetrix_blockbox_boxsize = 40;
+		var tetrix_blockbox_top = 1;
+		var tetrix_blockbox_left = 1;
+		var tetris_block_set = new Array();
+		//ブロック形の番号
+		/*var tetrix_block_number = Math.floor(Math.random() * 7);*/
+		var tetrix_block_number = 1;
+		// ブロックが出現するの位置
+		var tetrix_block_x = 3;
+		var tetrix_block_y = 0;
+		var rotateNumber = 0;
+		// 基本背景の作り
+		function Init() {
+			if (init == false) {
+				myCanvas = document.getElementById("MyCanvas");
+				Context = myCanvas.getContext("2d");
+				tetrix_blockbox_init();
+				tetris_block_init();
+				init = true;
+
+			}
+
+		}
+
+		function CheckConflict() {
+			var size = (tetris_block_set[tetrix_block_number]).length;
+			for (k = 0; k < size; k += 2) {
+				check_y = tetrix_block_y + tetris_block_set[tetrix_block_number][k];
+				check_x = tetrix_block_x + tetris_block_set[tetrix_block_number][k + 1];
+				// ブロックがお互いに会った時
+				if (check_x < 0 || check_x >= 10 || check_y >= 20 || tetrix_blockbox[check_y][check_x] != 0) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		function checkClear() {
+			for (i = 0; i < 20; ++i) {
+				// 一列の中でブロックが積もっているのか計算 
+				sum = 0;
+				for (j = 0; j < 10; ++j)
+					if (tetrix_blockbox[i][j] != 0)
+						sum++;
+
+				//　積もっているブロックの数が10の時
+				if (sum == 10) {
+					// 一列の上の列を下にコッピー
+					for (k = i; k > 0; --k)
+						for (j = 0; j < 10; ++j)
+							tetrix_blockbox[k][j] = tetrix_blockbox[k - 1][j];
+
+				}
+			}
+		}
+		
+		function Run() {
+		//ブロックが上部から下部に一間動くこ機能
+			tetrix_block_y++;
+			if (CheckConflict()) {
+				tetrix_block_y--;
+				var size = (tetris_block_set[tetrix_block_number]).length;
+				for (k = 0; k < size; k += 2) {
+					check_y = tetrix_block_y + tetris_block_set[tetrix_block_number][k];
+					check_x = tetrix_block_x + tetris_block_set[tetrix_block_number][k + 1];
+					tetrix_blockbox[check_y][check_x] = 1;
+				}
+				tetrix_block_y = 0;
+				tetrix_block_x = 3;
+				tetrix_block_number = Math.floor(Math.random() * 7);
+				checkClear();
+			}
+			onDraw();
+		}
+
+		// テトリスのブロックがプレイヤーに見える
+		function onDraw() {
+			if (init == false) return;
+			// 全体部分
+			Context.strokeStyle = "#000";
+			Context.lineWidth = 10;
+			Context.strokeRect(0, 0, myCanvas.width - 1, myCanvas.height - 1);
+			// ブロックの表示
+			for (i = 0; i < 20; ++i)
+				for (j = 0; j < 10; ++j) {
+					if (tetrix_blockbox[i][j] == 0)
+						Context.fillStyle = "#ccc";
+					else
+						Context.fillStyle = "green";
+
+					// 動いているブロックは青色で表示
+					var size = tetris_block_set[tetrix_block_number].length;
+					for (k = 0; k < size; k += 2) {
+						if (tetrix_block_y + tetris_block_set[tetrix_block_number][k] == i &&
+							tetrix_block_x + tetris_block_set[tetrix_block_number][k + 1] == j)
+							Context.fillStyle = "blue";
+					}
+
+
+					x = tetrix_blockbox_left + j * tetrix_blockbox_boxsize;
+					y = tetrix_blockbox_top + i * tetrix_blockbox_boxsize;
+					Context.fillRect(x, y, tetrix_blockbox_boxsize - 2, tetrix_blockbox_boxsize - 2);
+				}
+		}
+
+		function tetrix_blockbox_init() {
+			// 20行10列の箱作り
+			tetrix_blockbox = new Array();
+			for (i = 0; i < 20; ++i) {
+				tetrix_blockbox.push(new Array(10));
+				// 初めては0でできている
+				for (j = 0; j < 10; ++j) tetrix_blockbox[i][j] = 0;
+			}
+		}
+
+
+		function tetris_block_init() {
+			//ー形のブロック生成
+			tetris_block_set = new Array();
+			tetris_blockI = new Array();
+			tetris_blockI.push(0, 0);
+			tetris_blockI.push(1, 0);
+			tetris_blockI.push(2, 0);
+			tetris_blockI.push(3, 0);
+			//ブロックの集まりに入れる
+			tetris_block_set.push(tetris_blockI);
+
+			//L形のブロック生成
+			tetris_block_L = new Array();
+			tetris_block_L.push(0, 0);
+			tetris_block_L.push(1, 0);
+			tetris_block_L.push(2, 0);
+			tetris_block_L.push(2, 1);
+			tetris_block_set.push(tetris_block_L);
+			//T形のブロック生成
+			tetris_block_T = new Array();
+			tetris_block_T.push(0, 0);
+			tetris_block_T.push(1, 0);
+			tetris_block_T.push(1, 1);
+			tetris_block_T.push(2, 0);
+			tetris_block_set.push(tetris_block_T);
+
+			//ㄴ形のブロック生成
+			tetris_block_RL = new Array();
+			tetris_block_RL.push(0, 1);
+			tetris_block_RL.push(1, 1);
+			tetris_block_RL.push(2, 1);
+			tetris_block_RL.push(2, 0);
+			tetris_block_set.push(tetris_block_RL);
+			//ㅁ形のブロック生成
+			tetris_block_square = new Array();
+			tetris_block_square.push(0, 0);
+			tetris_block_square.push(1, 0);
+			tetris_block_square.push(1, 1);
+			tetris_block_square.push(0, 1);
+			tetris_block_set.push(tetris_block_square);
+			//Z形のブロック生成
+			tetris_block_Z = new Array();
+			tetris_block_Z.push(0, 0);
+			tetris_block_Z.push(0, 1);
+			tetris_block_Z.push(1, 1);
+			tetris_block_Z.push(1, 2);
+			tetris_block_set.push(tetris_block_Z);
+			//S形のブロック生成
+			tetris_block_RZ = new Array();
+			tetris_block_RZ.push(0, 1);
+			tetris_block_RZ.push(0, 2);
+			tetris_block_RZ.push(1, 0);
+			tetris_block_RZ.push(1, 1);
+			tetris_block_set.push(tetris_block_RZ);
+
+		}
+
+
+		//直ぐに一番下まで動く機能
+		function spacebar() {
+
+			do {
+				Run();
+			}
+			while (tetrix_block_y != 0)
+
+		}
+
+		function rotate() {
+			rotateNumber++;
+			if (rotateNumber == 4) {
+				rotateNumber = 0;
+			}
+
+		}
+
+		//ブロックを上下左右動かせる機能
+		document.onkeydown = function(e) {
+			var e = e.keyCode;
+			switch (e) {
+				case 37: {
+					tetrix_block_x--;
+					if (CheckConflict()) {
+						tetrix_block_x++;
+						onDraw();
+						break;
+					}
+					onDraw();
+					break;
+
+				}
+				case 39: {
+					tetrix_block_x++;
+					if (CheckConflict()) {
+						tetrix_block_x--;
+						onDraw();
+						break;
+					}
+					onDraw();
+					break;
+				}
+				case 40: {
+					if (CheckConflict) {
+						Run();
+					}
+					break;
+					onDraw();
+				}
+				case 32: {
+					if (CheckConflict) {
+						spacebar();
+					}
+					break;
+					onDraw();
+				}
+				case 38: {
+					RotateBlock();
+					onDraw();
+					break;
+				}
+			}
+
+
+		}
+		//ブロックを回転させる機能
+		function RotateBlock() {
+
+			switch (tetrix_block_number) {
+				case 0:
+				case 1:
+				case 2:
+				case 3:
+					break;
+				case 4:
+					return;
+			}
+
+			
+			var tetris_block_save = tetris_block_set[tetrix_block_number].slice();;
+
+			var centerX = 0;
+			var centerY = 1;
+			for (i = 0; i < tetris_block_set[tetrix_block_number].length; i += 2) {
+				y = tetris_block_set[tetrix_block_number][i + 1] - centerX;
+				x = -(tetris_block_set[tetrix_block_number][i] - centerY);
+				tetris_block_set[tetrix_block_number][i] = y + centerY;
+				tetris_block_set[tetrix_block_number][i + 1] = x + centerX;
+			}
+			if (CheckConflict())
+				tetris_block_set[tetrix_block_number] = tetris_block_save.slice();
+		}
+
+
+
+		$(document).ready(function() {
+			Init();
+			setInterval(Run, 500);
+		});
+
+	</script>
+
+	<canvas id="MyCanvas" width=400 height=800>
+		Canvas is not supported.
+	</canvas>
+</body>
+
+</html>
